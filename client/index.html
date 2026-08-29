@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Devine Tête</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <h1>Devine Tête 🕵️</h1>
+
+  <!-- Écran 1 : rejoindre -->
+  <div id="ecran-accueil">
+    <input type="text" id="input-prenom" placeholder="Ton prénom"><br><br>
+    <button id="btn-creer">Créer une partie</button>
+    <br><br>
+    <input type="text" id="input-code" placeholder="Code de la partie">
+    <button id="btn-rejoindre">Rejoindre</button>
+  </div>
+
+  <!-- Écran 2 : lobby -->
+  <div id="ecran-lobby" class="cache">
+    <h2>Code de la partie : <span id="code-affiche"></span></h2>
+    <p>Joueurs :</p>
+    <ul id="liste-joueurs"></ul>
+    <button id="btn-demarrer">Démarrer la partie</button>
+  </div>
+
+  <!-- Écran 3 : attribution -->
+  <div id="ecran-attribution" class="cache">
+    <h2>Choisis un personnage pour <span id="nom-cible"></span></h2>
+    <input type="text" id="input-personnage" placeholder="Nom du personnage">
+    <button id="btn-valider-perso">Valider</button>
+  </div>
+
+  <!-- Écran 4 : jeu -->
+  <div id="ecran-jeu" class="cache">
+    <h2>Les personnages des autres :</h2>
+    <ul id="liste-jeu"></ul>
+    <hr>
+    <input type="text" id="input-deviner" placeholder="Qui suis-je ?">
+    <button id="btn-deviner">Deviner mon personnage</button>
+    <p id="message-jeu"></p>
+  </div>
+
+  <!-- Écran 5 : fin -->
+  <div id="ecran-fin" class="cache">
+    <h2>🏆 Classement</h2>
+    <ol id="liste-classement"></ol>
+  </div>
+
+  <div id="erreur" class="cache"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
