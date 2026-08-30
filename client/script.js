@@ -1,9 +1,8 @@
 const socket = io();
 
-let monPrenom = '';
-let codeActuel = '';
+let monPrenom = sessionStorage.getItem('prenom') || '';
+let codeActuel = sessionStorage.getItem('codePartie') || '';
 
-// Éléments des écrans
 const ecrans = {
   accueil: document.getElementById('ecran-accueil'),
   lobby: document.getElementById('ecran-lobby'),
@@ -23,11 +22,18 @@ function afficherErreur(msg) {
   divErreur.classList.remove('cache');
 }
 
+// Tentative de reconnexion automatique si on a déjà des infos sauvegardées
+if (monPrenom && codeActuel) {
+  socket.emit('rejoindre_partie', { codePartie: codeActuel, prenom: monPrenom });
+}
+
 // --- Écran accueil ---
 document.getElementById('btn-creer').addEventListener('click', () => {
   monPrenom = document.getElementById('input-prenom').value.trim();
   if (!monPrenom) return afficherErreur('Entre ton prénom.');
   codeActuel = Math.floor(1000 + Math.random() * 9000).toString();
+  sessionStorage.setItem('prenom', monPrenom);
+  sessionStorage.setItem('codePartie', codeActuel);
   socket.emit('rejoindre_partie', { codePartie: codeActuel, prenom: monPrenom });
 });
 
@@ -35,6 +41,8 @@ document.getElementById('btn-rejoindre').addEventListener('click', () => {
   monPrenom = document.getElementById('input-prenom').value.trim();
   codeActuel = document.getElementById('input-code').value.trim();
   if (!monPrenom || !codeActuel) return afficherErreur('Entre ton prénom et le code.');
+  sessionStorage.setItem('prenom', monPrenom);
+  sessionStorage.setItem('codePartie', codeActuel);
   socket.emit('rejoindre_partie', { codePartie: codeActuel, prenom: monPrenom });
 });
 
@@ -58,6 +66,16 @@ document.getElementById('btn-demarrer').addEventListener('click', () => {
 // --- Attribution ---
 socket.on('a_toi_de_choisir', ({ pourQui }) => {
   document.getElementById('nom-cible').textContent = pourQui;
+  document.getElementById('input-personnage').disabled = false;
+  document.getElementById('input-personnage').value = '';
+  document.getElementById('btn-valider-perso').disabled = false;
+  afficherEcran('attribution');
+});
+
+socket.on('en_attente_attribution', () => {
+  document.getElementById('nom-cible').textContent = '...';
+  document.getElementById('input-personnage').disabled = true;
+  document.getElementById('btn-valider-perso').disabled = true;
   afficherEcran('attribution');
 });
 
@@ -113,6 +131,8 @@ socket.on('partie_terminee', ({ classement }) => {
     liste.appendChild(li);
   });
   afficherEcran('fin');
+  sessionStorage.removeItem('prenom');
+  sessionStorage.removeItem('codePartie');
 });
 
 // --- Erreurs générales ---
