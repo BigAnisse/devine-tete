@@ -45,6 +45,8 @@ function envoyerTour(partie) {
   });
 }
 
+// Démarre une manche : réinitialise les joueurs et tire un ordre d'attribution
+// aléatoire (différent à chaque manche) qui décide qui donne un mot à qui.
 function demarrerManche(partie) {
   partie.etat = 'attribution';
   partie.joueurs.forEach(j => {
@@ -54,10 +56,13 @@ function demarrerManche(partie) {
     j.ordreTrouve = null;
   });
 
-  const n = partie.joueurs.length;
-  partie.joueurs.forEach((joueur, i) => {
-    const cible = partie.joueurs[(i + 1) % n];
-    io.to(joueur.id).emit('a_toi_de_choisir', { pourQui: cible.prenom });
+  partie.ordreAttribution = [...partie.joueurs.map(j => j.prenom)].sort(() => Math.random() - 0.5);
+  const n = partie.ordreAttribution.length;
+
+  partie.ordreAttribution.forEach((prenomDonneur, i) => {
+    const prenomCible = partie.ordreAttribution[(i + 1) % n];
+    const joueurDonneur = partie.joueurs.find(j => j.prenom === prenomDonneur);
+    io.to(joueurDonneur.id).emit('a_toi_de_choisir', { pourQui: prenomCible });
   });
 }
 
@@ -72,10 +77,10 @@ function renvoyerEtatActuel(socket, partie, prenom) {
     if (joueur.aChoisi) {
       socket.emit('en_attente_attribution');
     } else {
-      const i = partie.joueurs.findIndex(j => j.prenom === prenom);
-      const n = partie.joueurs.length;
-      const cible = partie.joueurs[(i + 1) % n];
-      socket.emit('a_toi_de_choisir', { pourQui: cible.prenom });
+      const i = partie.ordreAttribution.indexOf(prenom);
+      const n = partie.ordreAttribution.length;
+      const prenomCible = partie.ordreAttribution[(i + 1) % n];
+      socket.emit('a_toi_de_choisir', { pourQui: prenomCible });
     }
   } else if (partie.etat === 'jeu') {
     socket.emit('debut_jeu', {
@@ -111,6 +116,7 @@ io.on('connection', (socket) => {
         mancheActuelle: 1,
         ordreTours: [],
         indexTourActuel: 0,
+        ordreAttribution: [],
         derniersResultatsManche: null,
         classementFinal: null
       };
@@ -185,12 +191,15 @@ io.on('connection', (socket) => {
     const partie = parties[codePartie];
     if (!partie) return;
 
-    const i = partie.joueurs.findIndex(j => j.id === socket.id);
-    if (i === -1 || partie.joueurs[i].aChoisi) return;
+    const prenom = socket.data.prenom;
+    const joueur = partie.joueurs.find(j => j.prenom === prenom);
+    if (!joueur || joueur.aChoisi) return;
 
-    partie.joueurs[i].aChoisi = true;
-    const n = partie.joueurs.length;
-    const cible = partie.joueurs[(i + 1) % n];
+    joueur.aChoisi = true;
+    const i = partie.ordreAttribution.indexOf(prenom);
+    const n = partie.ordreAttribution.length;
+    const prenomCible = partie.ordreAttribution[(i + 1) % n];
+    const cible = partie.joueurs.find(j => j.prenom === prenomCible);
     cible.personnage = personnage;
 
     const tousAssignes = partie.joueurs.every(j => j.personnage !== null);
@@ -200,9 +209,9 @@ io.on('connection', (socket) => {
       partie.ordreTours = [...partie.joueurs.map(j => j.prenom)].sort(() => Math.random() - 0.5);
       partie.indexTourActuel = 0;
 
-      partie.joueurs.forEach(joueur => {
-        io.to(joueur.id).emit('debut_jeu', {
-          joueurs: vueJoueur(partie, joueur.prenom),
+      partie.joueurs.forEach(j => {
+        io.to(j.id).emit('debut_jeu', {
+          joueurs: vueJoueur(partie, j.prenom),
           manche: partie.mancheActuelle,
           nbManches: partie.nbManches
         });
