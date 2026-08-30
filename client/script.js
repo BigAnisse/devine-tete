@@ -8,6 +8,7 @@ const ecrans = {
   lobby: document.getElementById('ecran-lobby'),
   attribution: document.getElementById('ecran-attribution'),
   jeu: document.getElementById('ecran-jeu'),
+  finManche: document.getElementById('ecran-fin-manche'),
   fin: document.getElementById('ecran-fin')
 };
 
@@ -22,7 +23,6 @@ function afficherErreur(msg) {
   divErreur.classList.remove('cache');
 }
 
-// Tentative de reconnexion automatique si on a déjà des infos sauvegardées
 if (monPrenom && codeActuel) {
   socket.emit('rejoindre_partie', { codePartie: codeActuel, prenom: monPrenom });
 }
@@ -31,10 +31,11 @@ if (monPrenom && codeActuel) {
 document.getElementById('btn-creer').addEventListener('click', () => {
   monPrenom = document.getElementById('input-prenom').value.trim();
   if (!monPrenom) return afficherErreur('Entre ton prénom.');
+  const nbManches = parseInt(document.getElementById('input-nb-manches').value, 10) || 1;
   codeActuel = Math.floor(1000 + Math.random() * 9000).toString();
   sessionStorage.setItem('prenom', monPrenom);
   sessionStorage.setItem('codePartie', codeActuel);
-  socket.emit('rejoindre_partie', { codePartie: codeActuel, prenom: monPrenom });
+  socket.emit('rejoindre_partie', { codePartie: codeActuel, prenom: monPrenom, nbManches });
 });
 
 document.getElementById('btn-rejoindre').addEventListener('click', () => {
@@ -47,15 +48,26 @@ document.getElementById('btn-rejoindre').addEventListener('click', () => {
 });
 
 // --- Lobby ---
-socket.on('maj_lobby', ({ joueurs }) => {
+socket.on('maj_lobby', ({ joueurs, hote }) => {
   document.getElementById('code-affiche').textContent = codeActuel;
   const liste = document.getElementById('liste-joueurs');
   liste.innerHTML = '';
   joueurs.forEach(p => {
     const li = document.createElement('li');
-    li.textContent = p;
+    li.textContent = p + (p === hote ? ' 👑' : '');
     liste.appendChild(li);
   });
+
+  const btnDemarrer = document.getElementById('btn-demarrer');
+  const attenteHote = document.getElementById('attente-hote');
+  if (monPrenom === hote) {
+    btnDemarrer.classList.remove('cache');
+    attenteHote.classList.add('cache');
+  } else {
+    btnDemarrer.classList.add('cache');
+    attenteHote.classList.remove('cache');
+  }
+
   afficherEcran('lobby');
 });
 
@@ -65,7 +77,7 @@ document.getElementById('btn-demarrer').addEventListener('click', () => {
 
 // --- Attribution ---
 socket.on('a_toi_de_choisir', ({ pourQui }) => {
-  document.getElementById('nom-cible').textContent = pourQui;
+  document.getElementById('titre-attribution').innerHTML = `Choisis un personnage pour <span id="nom-cible">${pourQui}</span>`;
   document.getElementById('input-personnage').disabled = false;
   document.getElementById('input-personnage').value = '';
   document.getElementById('btn-valider-perso').disabled = false;
@@ -73,7 +85,7 @@ socket.on('a_toi_de_choisir', ({ pourQui }) => {
 });
 
 socket.on('en_attente_attribution', () => {
-  document.getElementById('nom-cible').textContent = '...';
+  document.getElementById('titre-attribution').textContent = 'En attente des autres joueurs...';
   document.getElementById('input-personnage').disabled = true;
   document.getElementById('btn-valider-perso').disabled = true;
   afficherEcran('attribution');
@@ -93,17 +105,21 @@ function afficherJeu(joueurs) {
   liste.innerHTML = '';
   joueurs.forEach(j => {
     const li = document.createElement('li');
+    let texte;
     if (j.personnage === null) {
-      li.textContent = j.trouve ? `${j.prenom} : trouvé ✅` : `${j.prenom} : ??? (c'est toi)`;
+      texte = j.trouve ? `${j.prenom} : trouvé ✅` : `${j.prenom} : ??? (c'est toi)`;
     } else {
-      li.textContent = `${j.prenom} : ${j.personnage}${j.trouve ? ' ✅' : ''}`;
+      texte = `${j.prenom} : ${j.personnage}${j.trouve ? ' ✅' : ''}`;
     }
+    li.textContent = `${texte} — ${j.pointsTotal} pts`;
     liste.appendChild(li);
   });
 }
 
-socket.on('debut_jeu', ({ joueurs }) => {
+socket.on('debut_jeu', ({ joueurs, manche, nbManches }) => {
+  document.getElementById('info-manche').textContent = `Manche ${manche} / ${nbManches}`;
   afficherJeu(joueurs);
+  document.getElementById('message-jeu').textContent = '';
   afficherEcran('jeu');
 });
 
@@ -111,23 +127,72 @@ socket.on('maj_jeu', ({ joueurs }) => {
   afficherJeu(joueurs);
 });
 
+socket.on('tour', ({ joueurActuel, estMonTour }) => {
+  const infoTour = document.getElementById('info-tour');
+  const btnDeviner = document.getElementById('btn-deviner');
+  const inputDeviner = document.getElementById('input-deviner');
+
+  if (estMonTour) {
+    infoTour.textContent = "C'est ton tour ! Devine ton personnage.";
+    btnDeviner.disabled = false;
+    inputDeviner.disabled = false;
+  } else {
+    infoTour.textContent = `C'est au tour de ${joueurActuel}.`;
+    btnDeviner.disabled = true;
+    inputDeviner.disabled = true;
+  }
+});
+
 document.getElementById('btn-deviner').addEventListener('click', () => {
   const proposition = document.getElementById('input-deviner').value.trim();
   if (!proposition) return;
   socket.emit('deviner', { proposition });
+  document.getElementById('input-deviner').value = '';
 });
 
 socket.on('reponse_incorrecte', () => {
-  document.getElementById('message-jeu').textContent = '❌ Pas ça, réessaie !';
+  document.getElementById('message-jeu').textContent = '❌ Pas ça !';
 });
 
-// --- Fin ---
+socket.on('bonne_reponse', ({ prenom, points }) => {
+  document.getElementById('message-jeu').textContent = `✅ ${prenom} a trouvé (+${points} pts) !`;
+});
+
+// --- Fin de manche ---
+socket.on('fin_manche', ({ resultats, manche, nbManches, estHote }) => {
+  document.getElementById('num-manche-finie').textContent = `${manche} / ${nbManches}`;
+  const liste = document.getElementById('liste-resultats-manche');
+  liste.innerHTML = '';
+  resultats.forEach(r => {
+    const li = document.createElement('li');
+    li.textContent = `${r.prenom} — ${r.personnage} — total : ${r.pointsTotal} pts`;
+    liste.appendChild(li);
+  });
+
+  const btnSuivante = document.getElementById('btn-manche-suivante');
+  const attente = document.getElementById('attente-hote-manche');
+  if (estHote) {
+    btnSuivante.classList.remove('cache');
+    attente.classList.add('cache');
+  } else {
+    btnSuivante.classList.add('cache');
+    attente.classList.remove('cache');
+  }
+
+  afficherEcran('finManche');
+});
+
+document.getElementById('btn-manche-suivante').addEventListener('click', () => {
+  socket.emit('manche_suivante');
+});
+
+// --- Fin de partie ---
 socket.on('partie_terminee', ({ classement }) => {
   const liste = document.getElementById('liste-classement');
   liste.innerHTML = '';
   classement.forEach(j => {
     const li = document.createElement('li');
-    li.textContent = `${j.prenom} — c'était ${j.personnage}`;
+    li.textContent = `${j.prenom} — ${j.pointsTotal} pts`;
     liste.appendChild(li);
   });
   afficherEcran('fin');

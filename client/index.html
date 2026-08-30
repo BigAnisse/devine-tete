@@ -9,11 +9,18 @@
 
   <h1>Devine Tête 🕵️</h1>
 
-  <!-- Écran 1 : rejoindre -->
+  <!-- Écran 1 : accueil -->
   <div id="ecran-accueil">
-    <input type="text" id="input-prenom" placeholder="Ton prénom"><br><br>
-    <button id="btn-creer">Créer une partie</button>
-    <br><br>
+    <input type="text" id="input-prenom" placeholder="Ton prénom"><br>
+
+    <div id="bloc-creer">
+      <label for="input-nb-manches">Nombre de manches</label>
+      <input type="number" id="input-nb-manches" value="1" min="1" max="10">
+      <button id="btn-creer">Créer une partie</button>
+    </div>
+
+    <hr>
+
     <input type="text" id="input-code" placeholder="Code de la partie">
     <button id="btn-rejoindre">Rejoindre</button>
   </div>
@@ -23,19 +30,21 @@
     <h2>Code de la partie : <span id="code-affiche"></span></h2>
     <p>Joueurs :</p>
     <ul id="liste-joueurs"></ul>
-    <button id="btn-demarrer">Démarrer la partie</button>
+    <button id="btn-demarrer" class="cache">Démarrer la partie</button>
+    <p id="attente-hote" class="cache">En attente que l'hôte lance la partie...</p>
   </div>
 
   <!-- Écran 3 : attribution -->
   <div id="ecran-attribution" class="cache">
-    <h2>Choisis un personnage pour <span id="nom-cible"></span></h2>
+    <h2 id="titre-attribution">Choisis un personnage pour <span id="nom-cible"></span></h2>
     <input type="text" id="input-personnage" placeholder="Nom du personnage">
     <button id="btn-valider-perso">Valider</button>
   </div>
 
   <!-- Écran 4 : jeu -->
   <div id="ecran-jeu" class="cache">
-    <h2>Les personnages des autres :</h2>
+    <p id="info-manche"></p>
+    <h2 id="info-tour"></h2>
     <ul id="liste-jeu"></ul>
     <hr>
     <input type="text" id="input-deviner" placeholder="Qui suis-je ?">
@@ -43,9 +52,17 @@
     <p id="message-jeu"></p>
   </div>
 
-  <!-- Écran 5 : fin -->
+  <!-- Écran 5 : fin de manche -->
+  <div id="ecran-fin-manche" class="cache">
+    <h2>Résultats de la manche <span id="num-manche-finie"></span></h2>
+    <ol id="liste-resultats-manche"></ol>
+    <button id="btn-manche-suivante" class="cache">Manche suivante</button>
+    <p id="attente-hote-manche" class="cache">En attente que l'hôte lance la manche suivante...</p>
+  </div>
+
+  <!-- Écran 6 : fin de partie -->
   <div id="ecran-fin" class="cache">
-    <h2>🏆 Classement</h2>
+    <h2>🏆 Classement final</h2>
     <ol id="liste-classement"></ol>
   </div>
 

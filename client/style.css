@@ -153,3 +153,20 @@ ol li::before {
   width: 100%;
   text-align: center;
 }
+#bloc-creer label {
+  display: block;
+  font-size: 13px;
+  color: #666;
+  margin-top: 10px;
+}
+
+#bloc-creer input[type="number"] {
+  width: 80px;
+  display: inline-block;
+}
+
+hr {
+  border: none;
+  border-top: 1px solid #eee;
+  margin: 20px 0;
+}
