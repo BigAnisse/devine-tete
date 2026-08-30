@@ -2,6 +2,7 @@ const socket = io();
 
 let monPrenom = sessionStorage.getItem('prenom') || '';
 let codeActuel = sessionStorage.getItem('codePartie') || '';
+let monAvatar = { chapeau: 0, tete: 0, buste: 0, jambes: 0 };
 
 const ecrans = {
   accueil: document.getElementById('ecran-accueil'),
@@ -23,6 +24,29 @@ function afficherErreur(msg) {
   divErreur.classList.remove('cache');
 }
 
+// --- Avatar ---
+function rafraichirApercuAvatar() {
+  document.getElementById('apercu-avatar').innerHTML = rendreAvatar(monAvatar);
+  document.getElementById('nom-chapeau').textContent = NOMS_OPTIONS.chapeaux[monAvatar.chapeau];
+  document.getElementById('nom-tete').textContent = NOMS_OPTIONS.tetes[monAvatar.tete];
+  document.getElementById('nom-buste').textContent = NOMS_OPTIONS.bustes[monAvatar.buste];
+  document.getElementById('nom-jambes').textContent = NOMS_OPTIONS.jambes[monAvatar.jambes];
+}
+rafraichirApercuAvatar();
+
+document.querySelectorAll('.fleche').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const cat = btn.dataset.cat;
+    const sens = parseInt(btn.dataset.sens, 10);
+    const cle = cat === 'chapeau' ? 'chapeaux' : cat === 'tete' ? 'tetes' : cat === 'buste' ? 'bustes' : 'jambes';
+    const nbOptions = AVATAR_OPTIONS[cle].length;
+    monAvatar[cat] = (monAvatar[cat] + sens + nbOptions) % nbOptions;
+    rafraichirApercuAvatar();
+    socket.emit('maj_avatar', { avatar: monAvatar });
+  });
+});
+
+// Tentative de reconnexion automatique
 if (monPrenom && codeActuel) {
   socket.emit('rejoindre_partie', { codePartie: codeActuel, prenom: monPrenom });
 }
@@ -99,32 +123,40 @@ document.getElementById('btn-valider-perso').addEventListener('click', () => {
   document.getElementById('btn-valider-perso').disabled = true;
 });
 
-// --- Jeu ---
-function afficherJeu(joueurs) {
-  const liste = document.getElementById('liste-jeu');
-  liste.innerHTML = '';
-  joueurs.forEach(j => {
-    const li = document.createElement('li');
-    let texte;
-    if (j.personnage === null) {
-      texte = j.trouve ? `${j.prenom} : trouvé ✅` : `${j.prenom} : ??? (c'est toi)`;
-    } else {
-      texte = `${j.prenom} : ${j.personnage}${j.trouve ? ' ✅' : ''}`;
-    }
-    li.textContent = `${texte} — ${j.pointsTotal} pts`;
-    liste.appendChild(li);
-  });
+// --- Jeu / Carrousel ---
+let joueursActuels = [];
+let indexCarrousel = 0;
+
+function afficherCarteCarrousel() {
+  if (joueursActuels.length === 0) return;
+  const j = joueursActuels[indexCarrousel];
+  document.getElementById('carrousel-avatar').innerHTML = rendreAvatar(j.avatar);
+  document.getElementById('carrousel-nom').textContent = j.prenom;
+  document.getElementById('carrousel-mot').textContent = j.personnage === null ? "??? (c'est toi)" : j.personnage;
+  document.getElementById('carrousel-statut').textContent = j.trouve ? `✅ Trouvé — ${j.pointsTotal} pts` : `${j.pointsTotal} pts`;
 }
+
+document.getElementById('fleche-gauche').addEventListener('click', () => {
+  indexCarrousel = (indexCarrousel - 1 + joueursActuels.length) % joueursActuels.length;
+  afficherCarteCarrousel();
+});
+document.getElementById('fleche-droite').addEventListener('click', () => {
+  indexCarrousel = (indexCarrousel + 1) % joueursActuels.length;
+  afficherCarteCarrousel();
+});
 
 socket.on('debut_jeu', ({ joueurs, manche, nbManches }) => {
   document.getElementById('info-manche').textContent = `Manche ${manche} / ${nbManches}`;
-  afficherJeu(joueurs);
+  joueursActuels = joueurs;
+  indexCarrousel = 0;
+  afficherCarteCarrousel();
   document.getElementById('message-jeu').textContent = '';
   afficherEcran('jeu');
 });
 
 socket.on('maj_jeu', ({ joueurs }) => {
-  afficherJeu(joueurs);
+  joueursActuels = joueurs;
+  afficherCarteCarrousel();
 });
 
 socket.on('tour', ({ joueurActuel, estMonTour }) => {

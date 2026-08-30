@@ -30,6 +30,32 @@
     <h2>Code de la partie : <span id="code-affiche"></span></h2>
     <p>Joueurs :</p>
     <ul id="liste-joueurs"></ul>
+
+    <div id="choix-avatar">
+      <h3>Ton avatar</h3>
+      <div id="apercu-avatar"></div>
+      <div class="ligne-choix">
+        <button class="fleche" data-cat="chapeau" data-sens="-1">◀</button>
+        <span id="nom-chapeau"></span>
+        <button class="fleche" data-cat="chapeau" data-sens="1">▶</button>
+      </div>
+      <div class="ligne-choix">
+        <button class="fleche" data-cat="tete" data-sens="-1">◀</button>
+        <span id="nom-tete"></span>
+        <button class="fleche" data-cat="tete" data-sens="1">▶</button>
+      </div>
+      <div class="ligne-choix">
+        <button class="fleche" data-cat="buste" data-sens="-1">◀</button>
+        <span id="nom-buste"></span>
+        <button class="fleche" data-cat="buste" data-sens="1">▶</button>
+      </div>
+      <div class="ligne-choix">
+        <button class="fleche" data-cat="jambes" data-sens="-1">◀</button>
+        <span id="nom-jambes"></span>
+        <button class="fleche" data-cat="jambes" data-sens="1">▶</button>
+      </div>
+    </div>
+
     <button id="btn-demarrer" class="cache">Démarrer la partie</button>
     <p id="attente-hote" class="cache">En attente que l'hôte lance la partie...</p>
   </div>
@@ -45,7 +71,18 @@
   <div id="ecran-jeu" class="cache">
     <p id="info-manche"></p>
     <h2 id="info-tour"></h2>
-    <ul id="liste-jeu"></ul>
+
+    <div id="carrousel">
+      <button id="fleche-gauche" class="fleche-carrousel">◀</button>
+      <div id="carte-carrousel">
+        <p id="carrousel-mot"></p>
+        <div id="carrousel-avatar"></div>
+        <p id="carrousel-nom"></p>
+        <p id="carrousel-statut"></p>
+      </div>
+      <button id="fleche-droite" class="fleche-carrousel">▶</button>
+    </div>
+
     <hr>
     <input type="text" id="input-deviner" placeholder="Qui suis-je ?">
     <button id="btn-deviner">Deviner mon personnage</button>
@@ -69,6 +106,7 @@
   <div id="erreur" class="cache"></div>
 
   <script src="/socket.io/socket.io.js"></script>
+  <script src="avatars.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

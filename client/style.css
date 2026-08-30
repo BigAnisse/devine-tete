@@ -26,11 +26,11 @@ h2 {
   color: #341f97;
 }
 
-/* Chaque écran devient une carte blanche centrée */
 #ecran-accueil,
 #ecran-lobby,
 #ecran-attribution,
 #ecran-jeu,
+#ecran-fin-manche,
 #ecran-fin {
   background: #fff;
   border-radius: 16px;
@@ -101,14 +101,14 @@ li {
   margin: 6px 0;
 }
 
+ol {
+  counter-reset: rang;
+}
+
 ol li {
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-ol {
-  counter-reset: rang;
 }
 
 ol li::before {
@@ -153,6 +153,7 @@ ol li::before {
   width: 100%;
   text-align: center;
 }
+
 #bloc-creer label {
   display: block;
   font-size: 13px;
@@ -169,4 +170,77 @@ hr {
   border: none;
   border-top: 1px solid #eee;
   margin: 20px 0;
+}
+
+#choix-avatar {
+  margin: 20px 0;
+  text-align: center;
+}
+
+#apercu-avatar svg {
+  width: 100px;
+  margin: 0 auto;
+  display: block;
+}
+
+.ligne-choix {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 6px 0;
+}
+
+.ligne-choix span {
+  min-width: 110px;
+  font-size: 14px;
+}
+
+.fleche {
+  width: auto;
+  padding: 4px 10px;
+}
+
+#carrousel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.fleche-carrousel {
+  width: auto;
+  padding: 10px 14px;
+  border-radius: 50%;
+}
+
+#carte-carrousel {
+  background: #f5f3ff;
+  border-radius: 12px;
+  padding: 16px;
+  width: 180px;
+}
+
+#carrousel-avatar svg {
+  width: 120px;
+  display: block;
+  margin: 0 auto;
+}
+
+#carrousel-mot {
+  font-weight: bold;
+  color: #341f97;
+  margin: 0 0 4px 0;
+}
+
+#carrousel-nom {
+  margin: 4px 0 0 0;
+  font-size: 14px;
+}
+
+#carrousel-statut {
+  font-size: 12px;
+  color: #666;
+  margin: 2px 0 0 0;
 }

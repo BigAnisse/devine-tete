@@ -15,7 +15,8 @@ function vueJoueur(partie, prenom) {
     prenom: j.prenom,
     personnage: (j.prenom === prenom && !j.trouve) ? null : j.personnage,
     trouve: j.trouve,
-    pointsTotal: j.pointsTotal
+    pointsTotal: j.pointsTotal,
+    avatar: j.avatar
   }));
 }
 
@@ -140,7 +141,8 @@ io.on('connection', (socket) => {
       trouve: false,
       ordreTrouve: null,
       pointsTotal: 0,
-      rangsHistorique: []
+      rangsHistorique: [],
+      avatar: { chapeau: 0, tete: 0, buste: 0, jambes: 0 }
     });
 
     socket.join(codePartie);
@@ -151,6 +153,16 @@ io.on('connection', (socket) => {
       joueurs: partie.joueurs.map(j => j.prenom),
       hote: partie.hote
     });
+  });
+
+  socket.on('maj_avatar', ({ avatar }) => {
+    const codePartie = socket.data.codePartie;
+    const partie = parties[codePartie];
+    if (!partie) return;
+    const joueur = partie.joueurs.find(j => j.id === socket.id);
+    if (joueur && partie.etat === 'lobby') {
+      joueur.avatar = avatar;
+    }
   });
 
   socket.on('demarrer_partie', () => {
@@ -207,7 +219,7 @@ io.on('connection', (socket) => {
     if (!partie || partie.etat !== 'jeu') return;
 
     const prenom = socket.data.prenom;
-    if (tourActuelPrenom(partie) !== prenom) return; // pas son tour
+    if (tourActuelPrenom(partie) !== prenom) return;
 
     const joueur = partie.joueurs.find(j => j.prenom === prenom);
     if (!joueur || joueur.trouve) return;
